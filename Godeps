@@ -1,0 +1,5 @@
+github.com/smartystreets/goconvey 1.5.0
+github.com/codegangsta/cli v1.2.0
+github.com/google/go-github 508dcfd4c05dc9873c7b731c5154b40a4f65671f
+github.com/jacobsa/oglematchers 4fc24f97b5b74022c2a3f4ca7eed57ca29083d3e
+github.com/k0kubun/pp v2.1.0
