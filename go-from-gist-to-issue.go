@@ -25,6 +25,14 @@ func main() {
 			return
 		}
 		pp.Print(gistIds)
+
+		github := CreateGitHub()
+		gistInfo, err1 := github.GetIssues(gistIds)
+		if err1 != nil {
+			fmt.Printf("Failed to get gist info: err=%v\nAborted.\n", err1)
+			return
+		}
+		fmt.Printf("GistInfo=%v\n", gistInfo)
 	}
 	app.Run(os.Args)
 }
