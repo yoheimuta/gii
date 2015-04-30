@@ -98,7 +98,7 @@ func (g *GitHub) ImportGistsToIssues(gistsInfo []GistInfo, repo string, dry_run 
 
 		if !dry_run {
 			owner := *gist["Owner"]
-			body := fmt.Sprintf("Automatically imported from %s.\n\n%s", *gist["URL"], *gist["Content"])
+			body := fmt.Sprintf("Automatically imported from %v.\n\n%v", *gist["URL"], *gist["Content"])
 
 			var res *github.Response
 			issue, res, err = g.client.Issues.Create(owner, repo, &github.IssueRequest{
@@ -115,7 +115,7 @@ func (g *GitHub) ImportGistsToIssues(gistsInfo []GistInfo, repo string, dry_run 
 				continue
 			}
 
-			fmt.Printf("Created an issue: %v\n", *issue.Number)
+			fmt.Printf("Created an issue: from %v to %v\n", *gist["URL"], *issue.HTMLURL)
 			if g.isVerbose {
 				//TODO: pp panicked
 				//pp.Println(*issue)
@@ -154,7 +154,7 @@ func (g *GitHub) ImportGistsToIssues(gistsInfo []GistInfo, repo string, dry_run 
 					continue
 				}
 
-				fmt.Printf("Created an comment: %v\n", *issueComment.ID)
+				fmt.Printf("Created an comment: %v\n", *issueComment.HTMLURL)
 				if g.isVerbose {
 					//TODO: pp panicked
 					//pp.Println(issueComment)
