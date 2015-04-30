@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/codegangsta/cli"
 	"github.com/k0kubun/pp"
@@ -37,6 +38,10 @@ func main() {
 			Name:  "verbose",
 			Usage: "a flag to log verbosely",
 		},
+		cli.BoolFlag{
+			Name:  "sequence",
+			Usage: "a flag to import sequentially",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		if c.String("gist") == "" {
@@ -51,7 +56,6 @@ func main() {
 			fmt.Println("Not Found an argument of a token")
 			return
 		}
-		isVerbose := c.Bool("verbose")
 
 		gistIds, err := Parse(c.String("gist"))
 		if err != nil {
@@ -59,23 +63,61 @@ func main() {
 			return
 		}
 
-		if isVerbose {
+		if c.Bool("verbose") {
 			pp.Println(gistIds)
 		}
 
-		github := CreateGitHub(c.String("token"), isVerbose)
-		gistsInfo, err1 := github.GetGists(gistIds)
-		if err1 != nil {
-			fmt.Printf("Failed to get gists info: err=%v\nAborted.\n", err1)
-			return
+		importedCount := 0
+
+		if !c.Bool("sequence") {
+			var wg sync.WaitGroup
+
+			for _, id := range gistIds {
+				wg.Add(1)
+
+				go func(_id string, _c *cli.Context) {
+					defer wg.Done()
+
+					err = run(_id, _c)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+
+					importedCount++
+
+				}(id, c)
+			}
+			wg.Wait()
+		} else {
+			for _, id := range gistIds {
+				err = run(id, c)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+
+				importedCount++
+			}
 		}
 
-		imported_count, err2 := github.ImportGistsToIssues(gistsInfo, c.String("repo"), c.Bool("dry-run"))
-		if err2 != nil {
-			fmt.Printf("Failed to import gists info: err=%v\nAborted.\n", err2)
-			return
-		}
-		fmt.Printf("Completed to import gists info: count=%v\n", imported_count)
+		fmt.Printf("Completed to import gists info: count=%v\n", importedCount)
 	}
 	app.Run(os.Args)
+}
+
+func run(id string, c *cli.Context) (err error) {
+	github := CreateGitHub(c.String("token"), c.Bool("verbose"))
+
+	gistInfo, err := github.GetGist(id)
+	if err != nil {
+		return fmt.Errorf("Failed to get gist info: gistId=%v, err=%v\nSkipped.\n", id, err)
+	}
+
+	err = github.ImportGistToIssue(gistInfo, c.String("repo"), c.Bool("dry-run"))
+	if err != nil {
+		return fmt.Errorf("Failed to import gist info: gistId=%v, err=%v\nSkipped.\n", id, err)
+	}
+
+	return nil
 }
