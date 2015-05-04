@@ -10,8 +10,10 @@ import (
 )
 
 type GitHub struct {
-	client    *github.Client
-	isVerbose bool
+	client        *github.Client
+	isVerbose     bool
+	dryRun        bool
+	noGistComment bool
 }
 
 type GistInfo struct {
@@ -29,7 +31,7 @@ func (t *tokenSource) Token() (*oauth2.Token, error) {
 	return t.token, nil
 }
 
-func CreateGitHub(token string, isVerbose bool) *GitHub {
+func CreateGitHub(token string, isVerbose bool, dryRun bool, noGistComment bool) *GitHub {
 	ts := &tokenSource{
 		&oauth2.Token{AccessToken: token},
 	}
@@ -37,21 +39,35 @@ func CreateGitHub(token string, isVerbose bool) *GitHub {
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
 
 	g := &GitHub{
-		client:    github.NewClient(tc),
-		isVerbose: isVerbose,
+		client:        github.NewClient(tc),
+		isVerbose:     isVerbose,
+		dryRun:        dryRun,
+		noGistComment: noGistComment,
 	}
 	return g
 }
 
-func (g *GitHub) Run(id string, repo string, dryRun bool) (err error) {
-	gistInfo, err := g.getGist(id)
+func (g *GitHub) Run(gistId string, repo string) (err error) {
+	gistInfo, err := g.getGist(gistId)
 	if err != nil {
-		return fmt.Errorf("Failed to get gist info: gistId=%v, err=%v\nSkipped.\n", id, err)
+		return fmt.Errorf("Failed to get a gist info: gistId=%v, err=%v\nSkipped.\n", gistId, err)
 	}
 
-	err = g.importGistToIssue(gistInfo, repo, dryRun)
+	err, issueURL := g.importGistToIssue(gistInfo, repo)
 	if err != nil {
-		return fmt.Errorf("Failed to import gist info: gistId=%v, err=%v\nSkipped.\n", id, err)
+		return fmt.Errorf("Failed to import a gist info: gistId=%v, err=%v\nSkipped.\n", gistId, err)
+	}
+
+	if !g.noGistComment {
+		if !g.dryRun {
+			body := fmt.Sprintf("Automatically imported to %v.", issueURL)
+			err = g.createGistComment(gistId, &body)
+			if err != nil {
+				return fmt.Errorf("Failed to create a gist comment: gistId=%v, err=%v\nSkipped.\n", gistId, err)
+			}
+		} else {
+			fmt.Printf("Dry-run to create a gist comment: gistId=%v\n", gistId)
+		}
 	}
 
 	return nil
@@ -96,17 +112,17 @@ func (g *GitHub) getGist(gistId string) (gistInfo GistInfo, err error) {
 	return gistInfo, nil
 }
 
-func (g *GitHub) importGistToIssue(gistInfo GistInfo, repo string, dry_run bool) (err error) {
+func (g *GitHub) importGistToIssue(gistInfo GistInfo, repo string) (err error, issueURL string) {
 	var gist map[string]*string
 
 	gist, err = g.extractGist(gistInfo.gist)
 	if err != nil {
-		return fmt.Errorf("Failed to extract gist: %v. Skipped\n", err)
+		return fmt.Errorf("Failed to extract gist: %v. Skipped\n", err), ""
 	}
 
 	var issue *github.Issue
 
-	if !dry_run {
+	if !g.dryRun {
 		owner := *gist["Owner"]
 		body := fmt.Sprintf("Automatically imported from %v.\n\n%v", *gist["URL"], *gist["Content"])
 
@@ -117,10 +133,10 @@ func (g *GitHub) importGistToIssue(gistInfo GistInfo, repo string, dry_run bool)
 		})
 
 		if err != nil {
-			return fmt.Errorf("Skipped against a failed Issues.Create API: %v\n", err)
+			return fmt.Errorf("Skipped against a failed Issues.Create API: %v\n", err), ""
 		}
 		if res.StatusCode != 201 {
-			return fmt.Errorf("Skipped against an invalid response of Issues.Create API: %v\n", res.StatusCode)
+			return fmt.Errorf("Skipped against an invalid response of Issues.Create API: %v\n", res.StatusCode), ""
 		}
 
 		fmt.Printf("Created an issue: from %v to %v\n", *gist["URL"], *issue.HTMLURL)
@@ -140,9 +156,9 @@ func (g *GitHub) importGistToIssue(gistInfo GistInfo, repo string, dry_run bool)
 	for _, gistComment := range gistInfo.comments {
 		comment, err = g.extractGistComment(gistComment)
 		if err != nil {
-			return fmt.Errorf("Skipped. Failed to extract gistComment: %v\n", err)
+			return fmt.Errorf("Skipped. Failed to extract gistComment: %v\n", err), *issue.HTMLURL
 		}
-		if !dry_run {
+		if !g.dryRun {
 			number := *issue.Number
 			commentOwner := *comment["Owner"]
 
@@ -153,13 +169,13 @@ func (g *GitHub) importGistToIssue(gistInfo GistInfo, repo string, dry_run bool)
 			})
 
 			if err != nil {
-				return fmt.Errorf("Skipped against a failed Issues.CreateComment API: %v\n", err)
+				return fmt.Errorf("Skipped against a failed Issues.CreateComment API: %v\n", err), *issue.HTMLURL
 			}
 			if res.StatusCode != 201 {
-				return fmt.Errorf("Skipped against an invalid response of Issues.CreateComment API: %v\n", res.StatusCode)
+				return fmt.Errorf("Skipped against an invalid response of Issues.CreateComment API: %v\n", res.StatusCode), *issue.HTMLURL
 			}
 
-			fmt.Printf("Created an comment: %v\n", *issueComment.HTMLURL)
+			fmt.Printf("Created a comment: %v\n", *issueComment.HTMLURL)
 			if g.isVerbose {
 				//TODO: pp panicked
 				//pp.Println(issueComment)
@@ -172,7 +188,11 @@ func (g *GitHub) importGistToIssue(gistInfo GistInfo, repo string, dry_run bool)
 			}
 		}
 	}
-	return nil
+	if issue != nil {
+		return nil, *issue.HTMLURL
+	} else {
+		return nil, ""
+	}
 }
 
 func (g *GitHub) extractGist(gist *github.Gist) (extracted map[string]*string, err error) {
@@ -226,4 +246,28 @@ func (g *GitHub) extractGistComment(comment github.GistComment) (extracted map[s
 	}
 
 	return extracted, nil
+}
+
+func (g *GitHub) createGistComment(gistId string, body *string) (err error) {
+	var comment *github.GistComment
+	var res *github.Response
+	comment, res, err = g.client.Gists.CreateComment(gistId, &github.GistComment{
+		Body: body,
+	})
+
+	if err != nil {
+		return fmt.Errorf("Skipped against a failed Gists.CreateComment API: %v\n", err)
+	}
+	if res.StatusCode != 201 {
+		return fmt.Errorf("Skipped against an invalid response of Gists.CreateComment API: %v\n", res.StatusCode)
+	}
+
+	fmt.Printf("Created a gist comment: %v\n", *comment.URL)
+	if g.isVerbose {
+		//TODO: pp panicked
+		//pp.Println(comment)
+		//pp.Println(res)
+	}
+
+	return nil
 }

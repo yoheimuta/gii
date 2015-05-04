@@ -43,6 +43,10 @@ func main() {
 			Name:  "sequence",
 			Usage: "a flag to import sequentially",
 		},
+		cli.BoolFlag{
+			Name:  "no-gist-comment",
+			Usage: "a flag not to create a gist comment after completing each import",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		if c.String("gist") == "" {
@@ -60,7 +64,7 @@ func main() {
 
 		importedCount, err := action(
 			c.String("gist"), c.String("repo"), c.String("token"),
-			c.Bool("verbose"), c.Bool("sequence"), c.Bool("dry-run"),
+			c.Bool("verbose"), c.Bool("sequence"), c.Bool("dry-run"), c.Bool("no-gist-comment"),
 		)
 		if err != nil {
 			fmt.Printf("Failed to import from gists to issues: %v\n", err)
@@ -71,7 +75,7 @@ func main() {
 	app.Run(os.Args)
 }
 
-func action(gist string, repo string, token string, isVerbose bool, isSequence bool, dryRun bool) (count uint64, err error) {
+func action(gist string, repo string, token string, isVerbose bool, isSequence bool, dryRun bool, noGistComment bool) (count uint64, err error) {
 	var gistIds []string
 	gistIds, err = parse(gist)
 	if err != nil {
@@ -81,18 +85,18 @@ func action(gist string, repo string, token string, isVerbose bool, isSequence b
 		pp.Println(gistIds)
 	}
 
-	github := CreateGitHub(token, isVerbose)
+	github := CreateGitHub(token, isVerbose, dryRun, noGistComment)
 
 	if !isSequence {
 		var wg sync.WaitGroup
 
-		for _, id := range gistIds {
+		for _, gistId := range gistIds {
 			wg.Add(1)
 
-			go func(_id string, _repo string, _dryRun bool) {
+			go func(_gistId string, _repo string) {
 				defer wg.Done()
 
-				err = github.Run(_id, _repo, _dryRun)
+				err = github.Run(_gistId, _repo)
 				if err != nil {
 					fmt.Println(err)
 					return
@@ -100,12 +104,12 @@ func action(gist string, repo string, token string, isVerbose bool, isSequence b
 
 				atomic.AddUint64(&count, 1)
 
-			}(id, repo, dryRun)
+			}(gistId, repo)
 		}
 		wg.Wait()
 	} else {
-		for _, id := range gistIds {
-			err = github.Run(id, repo, dryRun)
+		for _, gistId := range gistIds {
+			err = github.Run(gistId, repo)
 			if err != nil {
 				fmt.Println(err)
 				continue
