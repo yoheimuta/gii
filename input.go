@@ -9,7 +9,7 @@ import (
 
 var gistIdRule = regexp.MustCompile("(.*)/(.*)")
 
-func Parse(filename string) (gistIds []string, err error) {
+func parse(filename string) (gistIds []string, err error) {
 	var fp *os.File
 
 	fp, err = os.Open(filename)

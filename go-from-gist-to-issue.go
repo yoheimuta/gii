@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 
 	"github.com/codegangsta/cli"
 	"github.com/k0kubun/pp"
@@ -57,67 +58,61 @@ func main() {
 			return
 		}
 
-		gistIds, err := Parse(c.String("gist"))
+		importedCount, err := action(
+			c.String("gist"), c.String("repo"), c.String("token"),
+			c.Bool("verbose"), c.Bool("sequence"), c.Bool("dry-run"),
+		)
 		if err != nil {
-			fmt.Printf("Failed to parse a given file: err=%v\nAborted.\n", err)
-			return
-		}
-
-		if c.Bool("verbose") {
-			pp.Println(gistIds)
-		}
-
-		importedCount := 0
-
-		if !c.Bool("sequence") {
-			var wg sync.WaitGroup
-
-			for _, id := range gistIds {
-				wg.Add(1)
-
-				go func(_id string, _c *cli.Context) {
-					defer wg.Done()
-
-					err = run(_id, _c)
-					if err != nil {
-						fmt.Println(err)
-						return
-					}
-
-					importedCount++
-
-				}(id, c)
-			}
-			wg.Wait()
+			fmt.Printf("Failed to import from gists to issues: %v\n", err)
 		} else {
-			for _, id := range gistIds {
-				err = run(id, c)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-
-				importedCount++
-			}
+			fmt.Printf("Completed to import from gists to issues: count=%v\n", importedCount)
 		}
-
-		fmt.Printf("Completed to import gists info: count=%v\n", importedCount)
 	}
 	app.Run(os.Args)
 }
 
-func run(id string, c *cli.Context) (err error) {
-	github := CreateGitHub(c.String("token"), c.Bool("verbose"))
-
-	gistInfo, err := github.GetGist(id)
+func action(gist string, repo string, token string, isVerbose bool, isSequence bool, dryRun bool) (count uint64, err error) {
+	var gistIds []string
+	gistIds, err = parse(gist)
 	if err != nil {
-		return fmt.Errorf("Failed to get gist info: gistId=%v, err=%v\nSkipped.\n", id, err)
+		return 0, fmt.Errorf("Failed to parse a given file: err=%v\nAborted.\n", err)
+	}
+	if isVerbose {
+		pp.Println(gistIds)
 	}
 
-	err = github.ImportGistToIssue(gistInfo, c.String("repo"), c.Bool("dry-run"))
-	if err != nil {
-		return fmt.Errorf("Failed to import gist info: gistId=%v, err=%v\nSkipped.\n", id, err)
-	}
+	github := CreateGitHub(token, isVerbose)
 
-	return nil
+	if !isSequence {
+		var wg sync.WaitGroup
+
+		for _, id := range gistIds {
+			wg.Add(1)
+
+			go func(_id string, _repo string, _dryRun bool) {
+				defer wg.Done()
+
+				err = github.Run(_id, _repo, _dryRun)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+
+				atomic.AddUint64(&count, 1)
+
+			}(id, repo, dryRun)
+		}
+		wg.Wait()
+	} else {
+		for _, id := range gistIds {
+			err = github.Run(id, repo, dryRun)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			count++
+		}
+	}
+	return count, nil
 }

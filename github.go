@@ -43,7 +43,21 @@ func CreateGitHub(token string, isVerbose bool) *GitHub {
 	return g
 }
 
-func (g *GitHub) GetGist(gistId string) (gistInfo GistInfo, err error) {
+func (g *GitHub) Run(id string, repo string, dryRun bool) (err error) {
+	gistInfo, err := g.getGist(id)
+	if err != nil {
+		return fmt.Errorf("Failed to get gist info: gistId=%v, err=%v\nSkipped.\n", id, err)
+	}
+
+	err = g.importGistToIssue(gistInfo, repo, dryRun)
+	if err != nil {
+		return fmt.Errorf("Failed to import gist info: gistId=%v, err=%v\nSkipped.\n", id, err)
+	}
+
+	return nil
+}
+
+func (g *GitHub) getGist(gistId string) (gistInfo GistInfo, err error) {
 	fmt.Printf("Downloading a gist and comments: %v\n", gistId)
 
 	gist, res, err := g.client.Gists.Get(gistId)
@@ -82,7 +96,7 @@ func (g *GitHub) GetGist(gistId string) (gistInfo GistInfo, err error) {
 	return gistInfo, nil
 }
 
-func (g *GitHub) ImportGistToIssue(gistInfo GistInfo, repo string, dry_run bool) (err error) {
+func (g *GitHub) importGistToIssue(gistInfo GistInfo, repo string, dry_run bool) (err error) {
 	var gist map[string]*string
 
 	gist, err = g.extractGist(gistInfo.gist)
