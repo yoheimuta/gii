@@ -13,7 +13,8 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "go-from-gist-to-issue"
-	app.Usage = "importing gists to github issues"
+	app.Usage = "importing each gist to github issue"
+	app.Version = "0.0.1"
 	app.EnableBashCompletion = true
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
