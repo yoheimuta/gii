@@ -1,0 +1,4 @@
+https://.github.com//111
+https://gist.github.com/yoheimuta
+gist.github.com
+://.github.com//golang

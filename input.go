@@ -10,9 +10,7 @@ import (
 var gistIdRule = regexp.MustCompile("(.*)/(.*)")
 
 func parse(filename string) (gistIds []string, err error) {
-	var fp *os.File
-
-	fp, err = os.Open(filename)
+	fp, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}

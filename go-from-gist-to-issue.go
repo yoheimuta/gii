@@ -76,8 +76,7 @@ func main() {
 }
 
 func action(gist string, repo string, token string, isVerbose bool, isSequence bool, dryRun bool, noGistComment bool) (count uint64, err error) {
-	var gistIds []string
-	gistIds, err = parse(gist)
+	gistIds, err := parse(gist)
 	if err != nil {
 		return 0, fmt.Errorf("Failed to parse a given file: err=%v\nAborted.\n", err)
 	}
