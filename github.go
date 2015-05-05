@@ -191,16 +191,18 @@ func (g *GitHub) importGistToIssue(gistInfo GistInfo, repo string) (issueURL str
 }
 
 func (g *GitHub) extractGist(gist *github.Gist) (extracted map[string]*string, err error) {
-	var gistTitle *string
 	var gistContent *string
-	for title, file := range gist.Files {
-		_title := string(title)
-		gistTitle = &_title
+	//var gistTitle *string
+	//for title, file := range gist.Files {
+	for _, file := range gist.Files {
+		//_title := string(title)
+		//gistTitle = &_title
 		gistContent = file.Content
 
 		// TODO:
 		break
 	}
+	gistTitle := gist.Description
 	gistOwner := gist.Owner.Login
 	gistHTMLURL := gist.HTMLURL
 
