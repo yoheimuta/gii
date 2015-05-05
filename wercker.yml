@@ -1,0 +1,19 @@
+box: tcnksm/gox
+build:
+  steps:
+    - setup-go-workspace
+    - script:
+        name: go get
+        code: |
+          wget -qO- https://raw.githubusercontent.com/pote/gpm/v1.3.2/bin/gpm | bash
+    - tcnksm/gox
+    - tcnksm/zip:
+        input: ${WERCKER_OUTPUT_DIR}/pkg
+        output: ${WERCKER_OUTPUT_DIR}/dist
+
+deploy:
+  steps:
+    - tcnksm/ghr:
+        token: $GITHUB_TOKEN
+        input: dist
+        replace: true
