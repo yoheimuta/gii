@@ -36,7 +36,7 @@ Or you can download a binary from [github relases page](https://github.com/yohei
 At first, prepare a file to list gist urls.
 
 ```ruby
-$ cat valid_example.txt
+$ cat example/valid_example.txt
 https://gist.github.com/yoheimuta/a05cc8b41f161efd8e8c
 https://gist.github.com/yoheimuta/c3d0be70ce9194c4556f
 ```
@@ -44,7 +44,7 @@ https://gist.github.com/yoheimuta/c3d0be70ce9194c4556f
 Then, dry-run to import these gist urls to your repository.
 
 ```ruby
-$ go-from-gist-to-issue --gist valid_example.txt --repo sample-go-from-gist-to-issue --token *** --no-gist-comment --dry-run
+$ go-from-gist-to-issue --gist example/valid_example.txt --repo sample-go-from-gist-to-issue --token *** --no-gist-comment --dry-run
 Downloading a gist and comments: a05cc8b41f161efd8e8c
 Downloaded  a gist and comments: a05cc8b41f161efd8e8c
 Dry-run to create an issue
@@ -61,7 +61,7 @@ Completed to import from gists to issues: count=2
 Finally, run to import these gist urls to a your repository.
 
 ```ruby
-$ go-from-gist-to-issue --gist valid_example.txt --repo sample-go-from-gist-to-issue --token *** --no-gist-comment
+$ go-from-gist-to-issue --gist example/valid_example.txt --repo sample-go-from-gist-to-issue --token *** --no-gist-comment
 Downloading a gist and comments: c3d0be70ce9194c4556f
 Downloaded  a gist and comments: c3d0be70ce9194c4556f
 Created an issue: from https://gist.github.com/c3d0be70ce9194c4556f to https://github.com/yoheimuta/sample-go-from-gist-to-issue/issues/259
@@ -74,6 +74,21 @@ Created a comment: https://github.com/yoheimuta/sample-go-from-gist-to-issue/iss
 Created a comment: https://github.com/yoheimuta/sample-go-from-gist-to-issue/issues/260#issuecomment-99134650
 Completed to import from gists to issues: count=2
 ```
+
+### Screenshots
+
+<table style="width:100%">
+  <tr>
+    <td>gist</td>
+    <td>to</td>
+    <td>issue</td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/yoheimuta/go-from-gist-to-issue/master/screenshot/gist.png" /></td>
+    <td>to</td>
+    <td><img src="https://raw.githubusercontent.com/yoheimuta/go-from-gist-to-issue/master/screenshot/issue.png" /></td>
+  </tr>
+</table>
 
 ### Options
 
