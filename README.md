@@ -5,7 +5,7 @@
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)][license]
 
 [release]: https://github.com/yoheimuta/gii/releases
-[wercker]: https://app.wercker.com/project/bykey/371feff8aaae40a8317fa0192a72803f
+[wercker]: https://app.wercker.com/project/bykey/f5af62972d6e8822f58bea38d5c7576d
 [license]: https://github.com/yoheimuta/gii/blob/master/LICENSE
 
 Gist Issue Importer.
