@@ -7,6 +7,11 @@ build:
     # at the right place in the workspace tree
     - setup-go-workspace
 
+    # Gets the packages
+    - install-packages:
+         packages: wget ruby zip
+
+    # Gets the go dependencies
     - script:
         name: go get
         code: |
