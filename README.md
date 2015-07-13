@@ -1,35 +1,37 @@
-# go-from-gist-to-issue #
+# gii #
 
-[![GitHub release](http://img.shields.io/github/release/yoheimuta/go-from-gist-to-issue.svg?style=flat-square)][release]
+[![GitHub release](http://img.shields.io/github/release/yoheimuta/gii.svg?style=flat-square)][release]
 [![Wercker](http://img.shields.io/wercker/ci/54393fe184570fc622001411.svg?style=flat-square)][wercker]
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)][license]
 
-[release]: https://github.com/yoheimuta/go-from-gist-to-issue/releases
+[release]: https://github.com/yoheimuta/gii/releases
 [wercker]: https://app.wercker.com/project/bykey/371feff8aaae40a8317fa0192a72803f
-[license]: https://github.com/yoheimuta/go-from-gist-to-issue/blob/master/LICENSE
+[license]: https://github.com/yoheimuta/gii/blob/master/LICENSE
 
-Easily import each gist content to github issue.
+Gist Issue Importer.
+
+`gii` enables you to import multiple Gists to GitHub Issues. `gii` can parallelize to import multiple gists.
 
 ### Usage
 
 Require a [personal access token](https://github.com/blog/1509-personal-api-tokens).
 
 ```ruby
-$ go-from-gist-to-issue --gist example.txt --repo yourrepo --token yourtoken
+$ gii --gist example.txt --repo yourrepo --token yourtoken
 ```
 
 ### Installation
 
-To install go-from-gist-to-issue, please use go get.
+To install gii, please use go get.
 
 ```ruby
-$ go get github.com/yoheimuta/go-from-gist-to-issue
+$ go get github.com/yoheimuta/gii
 ...
-$ go-from-gist-to-issue help
+$ gii help
 ...
 ```
 
-Or you can download a binary from [github relases page](https://github.com/yoheimuta/go-from-gist-to-issue/releases) and place it in $PATH directory.
+Or you can download a binary from [github relases page](https://github.com/yoheimuta/gii/releases) and place it in $PATH directory.
 
 ### Example
 
@@ -44,7 +46,7 @@ https://gist.github.com/yoheimuta/c3d0be70ce9194c4556f
 Then, dry-run to import these gist urls to your repository.
 
 ```ruby
-$ go-from-gist-to-issue --gist example/valid_example.txt --repo sample-go-from-gist-to-issue --token *** --no-gist-comment --dry-run
+$ gii --gist example/valid_example.txt --repo sample-go-from-gist-to-issue --token *** --no-gist-comment --dry-run
 Downloading a gist and comments: a05cc8b41f161efd8e8c
 Downloaded  a gist and comments: a05cc8b41f161efd8e8c
 Dry-run to create an issue
@@ -61,7 +63,7 @@ Completed to import from gists to issues: count=2
 Finally, run to import these gist urls to a your repository.
 
 ```ruby
-$ go-from-gist-to-issue --gist example/valid_example.txt --repo sample-go-from-gist-to-issue --token *** --no-gist-comment
+$ gii --gist example/valid_example.txt --repo sample-go-from-gist-to-issue --token *** --no-gist-comment
 Downloading a gist and comments: c3d0be70ce9194c4556f
 Downloaded  a gist and comments: c3d0be70ce9194c4556f
 Created an issue: from https://gist.github.com/c3d0be70ce9194c4556f to https://github.com/yoheimuta/sample-go-from-gist-to-issue/issues/259
@@ -84,24 +86,24 @@ Completed to import from gists to issues: count=2
     <td>issue</td>
   </tr>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/yoheimuta/go-from-gist-to-issue/master/screenshot/gist.png" /></td>
+    <td><img src="https://raw.githubusercontent.com/yoheimuta/gii/master/screenshot/gist.png" /></td>
     <td>to</td>
-    <td><img src="https://raw.githubusercontent.com/yoheimuta/go-from-gist-to-issue/master/screenshot/issue.png" /></td>
+    <td><img src="https://raw.githubusercontent.com/yoheimuta/gii/master/screenshot/issue.png" /></td>
   </tr>
 </table>
 
 ### Options
 
 ```ruby
-$ go-from-gist-to-issue help
+$ gii help
 NAME:
-   go-from-gist-to-issue - importing each gist to github issue
+   gii - CLI tool to bulk import each gist to github issue
 
 USAGE:
-   go-from-gist-to-issue [global options] command [command options] [arguments...]
+   gii [global options] command [command options] [arguments...]
 
 VERSION:
-   0.0.1
+   0.0.2
 
 COMMANDS:
    help, h      Shows a list of commands or help for one command
